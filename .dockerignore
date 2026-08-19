@@ -1,0 +1,9 @@
+# The build context only needs the Go sources. .git churn would otherwise
+# invalidate the ADD layer and force a full rebuild on every commit, and
+# ./plugin is the exported rootfs left by a previous run.
+.git
+.github
+plugin/
+scripts/
+README.md
+LICENSE

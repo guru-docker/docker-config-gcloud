@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  unit:
+    name: unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26'
+          check-latest: true
+      - name: gofmt, vet and tests
+        run: ./scripts/unit.sh
+
+  build:
+    name: plugin image builds
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: docker build
+        run: docker build -t plugin-rootfs .
+
+  # Needs a swarm, plugin installation rights and a real KMS key, so it is
+  # opt-in rather than part of the default push/PR run.
+  integration:
+    name: integration tests
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: run integration suite
+        run: sudo -E ./scripts/integration.sh
+        env:
+          GOOGLE_CLOUD_PROJECT: ${{ vars.GOOGLE_CLOUD_PROJECT }}
+          GCLOUD_LOCATION: ${{ vars.GCLOUD_LOCATION }}
+          GCLOUD_KEYRING: ${{ vars.GCLOUD_KEYRING }}
+          GCLOUD_KEY: ${{ vars.GCLOUD_KEY }}
+          GCLOUD_CREDENTIALS: ${{ secrets.GCLOUD_CREDENTIALS }}

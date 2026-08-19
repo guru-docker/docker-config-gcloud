@@ -1,0 +1,89 @@
+{
+  "description": "Google Cloud KMS config provider for Docker Swarm",
+  "documentation": "https://docs.docker.com/engine/extend/plugins/",
+  "entrypoint": [
+    "/docker-config-gcloud"
+  ],
+  "env": [
+    {
+      "name": "DEBUG",
+      "settable": [
+        "value"
+      ],
+      "value": "0"
+    },
+    {
+      "name": "GOOGLE_CLOUD_PROJECT",
+      "description": "project used for configs that carry no gcloud.project label",
+      "settable": [
+        "value"
+      ],
+      "value": ""
+    },
+    {
+      "name": "GCLOUD_LOCATION",
+      "description": "key ring location used for configs that carry no gcloud.location label",
+      "settable": [
+        "value"
+      ],
+      "value": ""
+    },
+    {
+      "name": "GCLOUD_KEYRING",
+      "description": "key ring used for configs that carry no gcloud.keyring label",
+      "settable": [
+        "value"
+      ],
+      "value": ""
+    },
+    {
+      "name": "GOOGLE_APPLICATION_CREDENTIALS",
+      "description": "path to a credentials file inside the plugin, e.g. /run/gcloud/key.json",
+      "settable": [
+        "value"
+      ],
+      "value": ""
+    },
+    {
+      "name": "GCLOUD_TIMEOUT",
+      "description": "deadline for a single Cloud KMS call",
+      "settable": [
+        "value"
+      ],
+      "value": "30s"
+    },
+    {
+      "name": "GCLOUD_REQUIRE_CREDENTIALS_FILE",
+      "description": "1 refuses to start without a credentials file instead of falling back to ADC",
+      "settable": [
+        "value"
+      ],
+      "value": "0"
+    }
+  ],
+  "interface": {
+    "socket": "config-gcloud.sock",
+    "types": [
+      "docker.secretprovider/1.0"
+    ]
+  },
+  "mounts": [
+    {
+      "name": "gcloud",
+      "description": "host directory holding credentials.json and any ciphertext files; set gcloud.source to your own",
+      "destination": "/run/gcloud",
+      "options": [
+        "rbind",
+        "ro"
+      ],
+      "source": "/var/lib/docker/plugins/",
+      "settable": [
+        "source"
+      ],
+      "type": "bind"
+    }
+  ],
+  "network": {
+    "type": "host"
+  }
+}
