@@ -27,7 +27,42 @@ If what you want is a hosted secret store rather than your own ciphertext, use
 [docker-secret-gcloud](https://github.com/guru-docker/docker-secret-gcloud),
 which reads Google Cloud Secret Manager.
 
+## When not to use this
+
+For configuration that is not sensitive, use a plain `docker config`. It costs
+no API call when a task starts, has no dependency on Cloud KMS being reachable,
+and `docker config inspect` shows you the value while you are debugging.
+
+For values someone else already manages, use
+[docker-secret-gcloud](https://github.com/guru-docker/docker-secret-gcloud).
+Secret Manager holds config files as happily as it holds credentials, versions
+them for you, and needs no encrypt step in your deploy pipeline.
+
+This plugin earns its place when the ciphertext itself is the artifact you want
+to own -- committed to git, shipped with the deployment, with no hosted store
+holding the value -- or when you want to crypto-shred every config wrapped with
+a key by destroying a single key version.
+
 ## Usage
+
+0 - Create the key, once
+
+```
+$ gcloud kms keyrings create configs --location=global
+
+$ gcloud kms keys create app --location=global --keyring=configs \
+    --purpose=encryption --destroy-scheduled-duration=24h
+```
+
+> Cloud KMS resources are close to permanent: a key ring can never be deleted,
+> and a key can only be deleted once every version has finished being destroyed
+> -- which waits out `--destroy-scheduled-duration`, 30 days by default. Set it
+> short on anything you are only creating to try this out.
+
+The plugin never creates either. It calls exactly one API, `Decrypt`, so its
+service account needs only `roles/cloudkms.cryptoKeyDecrypter` on the key --
+not `cloudkms.admin`, which grants key management and deliberately excludes
+encrypt and decrypt.
 
 1 - Encrypt the config
 
